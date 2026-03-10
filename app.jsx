@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Sun, Moon, Github, ExternalLink, Mail, Phone, MapPin,
-    Download, Briefcase, Code, User, Send, ChevronRight, Menu, X
+    Download, Briefcase, Code, User, Send, ChevronRight, Menu, X, Award
 } from 'lucide-react';
 import './index.css';
 
@@ -57,8 +57,11 @@ const personalInfo = {
     phone1: "+234 701 967 2820",
     phone2: "+234 906 027 6333",
     github: "https://github.com/Sardaunatechworks",
-    portfolio: "https://sardaunatechworks.github.io",
-    about: "Frontend Developer, IT Specialist, and Project Manager with experience designing and deploying digital platforms, managing cross-functional teams, and building technology solutions that solve real-world problems. Founder of Sardauna Tech Labs Ltd and Project Manager at Techfort Foundation, leading initiatives that promote digital innovation, technical education, and community empowerment."
+    portfolio: "https://sardauna-portfolio.vercel.app",
+    about: `Innovative IT Specialist, Frontend Developer, and Technical Project Manager with hands-on experience building digital products, managing development teams, and delivering scalable technology solutions.
+Founder of Sardauna Tech Labs Ltd, where I lead the development of modern digital platforms and business automation tools. Currently serving as Project Manager at Techfort Foundation, driving initiatives focused on technology education and digital empowerment.
+Strong background in frontend engineering, product development, AI integration, and cloud-based applications. Passionate about building impactful systems that improve user experience, automate workflows, and enable communities to thrive through technology.
+`
 };
 
 const experience = [
@@ -116,50 +119,50 @@ const projects = [
     {
         title: "SmartSupport AI",
         desc: "AI-powered omnichannel customer support automation platform.",
-        tech: ["React", "TailwindCSS", "Firebase", "AI APIs"],
+        tech: ["React", "TailwindCSS", "Firebase", "AI APIs", "UNDERDEVELOPMENT"],
         github: "https://github.com/Sardaunatechworks/smartsupport-ai",
-        demo: "https://smartsupport-ai.vercel.app",
-        img: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800"
+        demo: "https://smartsupport-ai.comingsoon",
+        img: "public/smartsupport.png"
     },
     {
         title: "Inventory Tracker",
         desc: "Vendor and reseller inventory management system with real-time synchronization.",
-        tech: ["React", "Firebase", "TailwindCSS"],
+        tech: ["React", "Firebase", "TailwindCSS", "UNDERDEVELOPMENT"],
         github: "https://github.com/Sardaunatechworks/inventory-tracker",
-        demo: "https://inventory-tracker.vercel.app",
-        img: "https://images.unsplash.com/photo-1586528116311-ad8ed7c824c9?auto=format&fit=crop&q=80&w=800"
+        demo: "https://inventory-tracker.comingsoon",
+        img: "public/inventory.png"
     },
     {
         title: "Tech Resource Hub",
         desc: "Multi-language platform providing curated technology learning resources.",
         tech: ["HTML", "CSS", "JavaScript"],
-        github: "https://github.com/Sardaunatechworks/tech-resource-hub",
-        demo: "https://tech-resource-hub.vercel.app",
-        img: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=800"
+        github: "https://github.com/Sardaunatechworks/Sardaunatechub.web",
+        demo: "https://sardaunatechworks.github.io/Sardaunatechub.web/",
+        img: "public/hub.png"
     },
     {
         title: "Crime Watch",
         desc: "Cloud-based platform for reporting and monitoring crime incidents.",
-        tech: ["React", "Firebase"],
+        tech: ["Typescript", "HTML", "Supabase"],
         github: "https://github.com/Sardaunatechworks/crime-watch",
-        demo: "https://crime-watch.vercel.app",
-        img: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&q=80&w=800"
+        demo: "https://crime-watch-2ac7.vercel.app",
+        img: "public/crimewatch.png"
     },
     {
         title: "FUD Alumni Network",
         desc: "Platform connecting Federal University Dutse students with alumni mentors.",
-        tech: ["React", "Firebase"],
+        tech: ["Typescript", "PLpgSQL", "Supabase",],
         github: "https://github.com/Sardaunatechworks/fud-alumni-network",
-        demo: "https://fud-alumni.vercel.app",
-        img: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=800"
+        demo: "https://fud-alumni-network.vercel.app",
+        img: "public/fudalumni.png"
     },
     {
         title: "Community Traders Platform",
         desc: "Digital system for local traders to manage inventory and business operations.",
-        tech: ["React", "TailwindCSS", "Firebase"],
+        tech: ["React", "TailwindCSS", "Firebase", "UNDERDEVELOPMENT"],
         github: "https://github.com/Sardaunatechworks/community-traders",
-        demo: "https://community-traders.vercel.app",
-        img: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=800"
+        demo: "https://community-traders.comingsoon",
+        img: "public/community.png"
     }
 ];
 
@@ -167,6 +170,45 @@ const skills = [
     "HTML5", "CSS3", "JavaScript", "TypeScript", "React",
     "Tailwind CSS", "PHP", "Git", "GitHub", "Firebase",
     "REST APIs", "Agile/Scrum", "UI/UX Design"
+];
+
+const certifications = [
+    {
+        title: "Microsoft AI Developers Program ",
+        issuer: "Digital Skills Nigeria",
+        date: "2025",
+        icon: Award
+    },
+    {
+        title: "Google Cloud Innovator Program ",
+        issuer: "Google Developer Groups",
+        date: "2025",
+        icon: Award
+    },
+    {
+        title: "UI/UX Design Bootcamp Certificate ",
+        issuer: "Nothern Creative Designers",
+        date: "2025",
+        icon: Award
+    },
+    {
+        title: "UI/UX Design",
+        issuer: "TrybeX Bootcamp",
+        date: "2024",
+        icon: Award
+    },
+    {
+        title: "Introduction to Cybersecurity & Digital Forensics",
+        issuer: "Bread of Hope",
+        date: "2025",
+        icon: Award
+    },
+    {
+        title: "Build with AI 2025 ",
+        issuer: "Google Developers Group",
+        date: "2025",
+        icon: Award
+    }
 ];
 
 // --- COMPONENTS ---
@@ -223,13 +265,20 @@ export default function App() {
 
         try {
             const formData = new FormData(e.target);
-            // NOTE: Add Web3Forms generic access key. 
-            // Replace 'YOUR_ACCESS_KEY_HERE' with your real key from web3forms.com
-            formData.append("access_key", "YOUR_ACCESS_KEY_HERE");
 
-            const response = await fetch("https://api.web3forms.com/submit", {
+            // We'll prepare our data as JSON for our Nodemailer backend
+            const contactData = {
+                name: formData.get("name"),
+                email: formData.get("email"),
+                message: formData.get("message")
+            };
+
+            const response = await fetch("http://localhost:5000/api/contact", {
                 method: "POST",
-                body: formData
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(contactData)
             });
 
             const data = await response.json();
@@ -275,13 +324,13 @@ export default function App() {
                                 M
                             </div>
                             <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white hidden sm:block">
-                                Auwal Abubakar
+                                Muhammad Auwal Abubakar
                             </span>
                         </div>
 
                         {/* Desktop Menu */}
                         <div className="hidden md:flex items-center space-x-8">
-                            {['About', 'Experience', 'Projects', 'Contact'].map((item) => (
+                            {['About', 'Experience', 'Projects', 'Certifications', 'Contact'].map((item) => (
                                 <button
                                     key={item}
                                     onClick={() => scrollToSection(item.toLowerCase())}
@@ -325,7 +374,7 @@ export default function App() {
                 {isMenuOpen && (
                     <div className="md:hidden glass backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border-b border-slate-200/50 dark:border-slate-800/50 absolute w-full">
                         <div className="px-4 pt-2 pb-6 space-y-2">
-                            {['About', 'Experience', 'Projects', 'Contact'].map((item) => (
+                            {['About', 'Experience', 'Projects', 'Certifications', 'Contact'].map((item) => (
                                 <button
                                     key={item}
                                     onClick={() => scrollToSection(item.toLowerCase())}
@@ -354,7 +403,7 @@ export default function App() {
                         </div>
 
                         <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-6 leading-tight">
-                            Hi, I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Auwal</span> <br />
+                            Hi, I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Muhammad Auwal Abubakar</span> <br />
                             <span className="typing-cursor text-4xl md:text-6xl text-slate-700 dark:text-slate-300 font-bold h-[1.2em] inline-block mt-2">
                                 {typedText}
                             </span>
@@ -479,6 +528,28 @@ export default function App() {
                                             <Github size={16} /> Code
                                         </a>
                                     </div>
+                                </div>
+                            </GlassCard>
+                        ))}
+                    </div>
+                </section>
+
+                {/* CERTIFICATIONS SECTION */}
+                <section id="certifications" className="py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto bg-slate-100/50 dark:bg-slate-900/50 rounded-3xl mb-16 border border-slate-200/50 dark:border-slate-800/50">
+                    <SectionHeading title="Certifications & Trainings" subtitle="Continuous learning and professional development." icon={Award} />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
+                        {certifications.map((cert, index) => (
+                            <GlassCard key={index} className="p-6 flex items-start gap-5 hover:shadow-lg hover:border-blue-500/30 transition-all duration-300">
+                                <div className="p-4 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shrink-0">
+                                    <cert.icon size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 leading-tight">{cert.title}</h3>
+                                    <p className="text-slate-600 dark:text-slate-400 text-sm font-medium mb-2">{cert.issuer}</p>
+                                    <span className="inline-block px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                        {cert.date}
+                                    </span>
                                 </div>
                             </GlassCard>
                         ))}
