@@ -122,7 +122,7 @@ const projects = [
         tech: ["React", "TailwindCSS", "Firebase", "AI APIs", "UNDERDEVELOPMENT"],
         github: "https://github.com/Sardaunatechworks/smartsupport-ai",
         demo: "https://smartsupport-ai.comingsoon",
-        img: "public/smartsupport.png"
+        img: "/smartsupport.png"
     },
     {
         title: "Inventory Tracker",
@@ -130,7 +130,7 @@ const projects = [
         tech: ["React", "Firebase", "TailwindCSS", "UNDERDEVELOPMENT"],
         github: "https://github.com/Sardaunatechworks/inventory-tracker",
         demo: "https://inventory-tracker.comingsoon",
-        img: "public/inventory.png"
+        img: "/inventory.png"
     },
     {
         title: "Tech Resource Hub",
@@ -138,7 +138,7 @@ const projects = [
         tech: ["HTML", "CSS", "JavaScript"],
         github: "https://github.com/Sardaunatechworks/Sardaunatechub.web",
         demo: "https://sardaunatechworks.github.io/Sardaunatechub.web/",
-        img: "public/hub.png"
+        img: "/hub.png"
     },
     {
         title: "Crime Watch",
@@ -146,7 +146,7 @@ const projects = [
         tech: ["Typescript", "HTML", "Supabase"],
         github: "https://github.com/Sardaunatechworks/crime-watch",
         demo: "https://crime-watch-2ac7.vercel.app",
-        img: "public/crimewatch.png"
+        img: "/crimewatch.png"
     },
     {
         title: "FUD Alumni Network",
@@ -154,7 +154,7 @@ const projects = [
         tech: ["Typescript", "PLpgSQL", "Supabase",],
         github: "https://github.com/Sardaunatechworks/fud-alumni-network",
         demo: "https://fud-alumni-network.vercel.app",
-        img: "public/fudalumni.png"
+        img: "/fudalumni.png"
     },
     {
         title: "Community Traders Platform",
@@ -162,7 +162,7 @@ const projects = [
         tech: ["React", "TailwindCSS", "Firebase", "UNDERDEVELOPMENT"],
         github: "https://github.com/Sardaunatechworks/community-traders",
         demo: "https://community-traders.comingsoon",
-        img: "public/community.png"
+        img: "/community.png"
     }
 ];
 
