@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { authApi, adminApi } from '../../lib/api';
+import { authApi, adminApi, isApiConfigured } from '../../lib/api';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -184,19 +184,39 @@ export default function AdminDashboardPage() {
                 profile_pic: genForm.profile_pic
             };
 
-            const { data: existing } = await supabase.from('personal_info').select('id').limit(1).maybeSingle();
-            let err;
-            if (existing) {
-                const { error } = await supabase.from('personal_info').update(payload).eq('id', existing.id);
-                err = error;
-            } else {
-                const { error } = await supabase.from('personal_info').insert(payload);
-                err = error;
+            if (isApiConfigured()) {
+                await adminApi.updateProfile({
+                    full_name: genForm.name,
+                    location: genForm.location,
+                    email: genForm.email,
+                    phone1: genForm.phone1,
+                    phone2: genForm.phone2,
+                    github_url: genForm.github,
+                    portfolio_url: genForm.portfolio,
+                    short_bio: genForm.about,
+                    profile_image_url: genForm.profile_pic,
+                    roles: rolesList
+                });
+            } else if (isSupabaseConfigured()) {
+                const { data: existing } = await supabase.from('personal_info').select('id').limit(1).maybeSingle();
+                let err;
+                if (existing) {
+                    const { error } = await supabase.from('personal_info').update(payload).eq('id', existing.id);
+                    err = error;
+                } else {
+                    const { error } = await supabase.from('personal_info').insert(payload);
+                    err = error;
+                }
+                if (err) throw err;
             }
 
-            if (err) throw err;
             setPersonalInfo(prev => ({ ...prev, ...payload }));
-            setFeedback('General settings saved successfully!', 'success');
+            setFeedback(
+                !isApiConfigured() && !isSupabaseConfigured()
+                    ? 'General settings saved (Offline Preview Mode)!'
+                    : 'General settings saved successfully!',
+                'success'
+            );
         } catch (err) {
             console.error(err);
             setFeedback('Failed to save general settings: ' + err.message, 'error');
@@ -208,25 +228,36 @@ export default function AdminDashboardPage() {
         if (!file) return;
         setIsProfilePicUploading(true);
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `profile-${Date.now()}.${fileExt}`;
-            const filePath = `profile-images/${fileName}`;
+            if (isApiConfigured()) {
+                const uploadRes = await adminApi.uploadMedia(file, 'profile');
+                const publicUrl = uploadRes.data?.url || uploadRes.url || '';
+                setGenForm(prev => ({ ...prev, profile_pic: publicUrl }));
+                setFeedback('Profile photograph uploaded successfully. Remember to click "Save Settings".', 'success');
+            } else if (isSupabaseConfigured()) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `profile-${Date.now()}.${fileExt}`;
+                const filePath = `profile-images/${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-                .from('portfolio-uploads')
-                .upload(filePath, file);
+                const { error: uploadError } = await supabase.storage
+                    .from('portfolio-uploads')
+                    .upload(filePath, file);
 
-            if (uploadError) throw uploadError;
+                if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('portfolio-uploads')
-                .getPublicUrl(filePath);
+                const { data: { publicUrl } } = supabase.storage
+                    .from('portfolio-uploads')
+                    .getPublicUrl(filePath);
 
-            setGenForm(prev => ({ ...prev, profile_pic: publicUrl }));
-            setFeedback('Profile photograph uploaded successfully. Remember to click "Save Settings".', 'success');
+                setGenForm(prev => ({ ...prev, profile_pic: publicUrl }));
+                setFeedback('Profile photograph uploaded successfully. Remember to click "Save Settings".', 'success');
+            } else {
+                const previewUrl = URL.createObjectURL(file);
+                setGenForm(prev => ({ ...prev, profile_pic: previewUrl }));
+                setFeedback('Profile image loaded for preview. Click "Save Settings" to apply.', 'success');
+            }
         } catch (err) {
             console.error(err);
-            setFeedback('Profile picture upload failed. Ensure bucket "portfolio-uploads" exists and is public.', 'error');
+            setFeedback('Profile picture upload failed: ' + err.message, 'error');
         } finally {
             setIsProfilePicUploading(false);
         }
@@ -246,23 +277,52 @@ export default function AdminDashboardPage() {
                 desc_points: points
             };
 
-            let err;
-            if (expForm.id) {
-                const { error } = await supabase.from('experience').update(payload).eq('id', expForm.id);
-                err = error;
-                if (!err) {
-                    setExperience(prev => prev.map(item => item.id === expForm.id ? { ...item, ...payload, desc: points } : item));
+            if (isApiConfigured()) {
+                if (expForm.id) {
+                    await adminApi.updateExperience(expForm.id, {
+                        role_title: expForm.role,
+                        organization: expForm.company,
+                        date_display: expForm.date,
+                        desc_points: points
+                    });
+                } else {
+                    const res = await adminApi.createExperience({
+                        role_title: expForm.role,
+                        organization: expForm.company,
+                        date_display: expForm.date,
+                        desc_points: points,
+                        sort_order: experience.length
+                    });
+                    if (res?.data?.id) payload.id = res.data.id;
                 }
+                setExperience(prev => expForm.id
+                    ? prev.map(item => item.id === expForm.id ? { ...item, ...payload, desc: points } : item)
+                    : [...prev, { id: payload.id || Date.now(), ...payload, desc: points }]
+                );
+            } else if (isSupabaseConfigured()) {
+                let err;
+                if (expForm.id) {
+                    const { error } = await supabase.from('experience').update(payload).eq('id', expForm.id);
+                    err = error;
+                    if (!err) {
+                        setExperience(prev => prev.map(item => item.id === expForm.id ? { ...item, ...payload, desc: points } : item));
+                    }
+                } else {
+                    const sort_order = experience.length;
+                    const { data, error } = await supabase.from('experience').insert({ ...payload, sort_order }).select().single();
+                    err = error;
+                    if (!err && data) {
+                        setExperience(prev => [...prev, { ...data, desc: points }]);
+                    }
+                }
+                if (err) throw err;
             } else {
-                const sort_order = experience.length;
-                const { data, error } = await supabase.from('experience').insert({ ...payload, sort_order }).select().single();
-                err = error;
-                if (!err && data) {
-                    setExperience(prev => [...prev, { ...data, desc: points }]);
-                }
+                setExperience(prev => expForm.id
+                    ? prev.map(item => item.id === expForm.id ? { ...item, ...payload, desc: points } : item)
+                    : [...prev, { id: 'preview-' + Date.now(), ...payload, desc: points }]
+                );
             }
 
-            if (err) throw err;
             setExpForm(null);
             setFeedback('Experience item saved successfully!', 'success');
         } catch (err) {
@@ -280,8 +340,12 @@ export default function AdminDashboardPage() {
 
         setFeedback('Deleting experience...', 'info');
         try {
-            const { error } = await supabase.from('experience').delete().eq('id', id);
-            if (error) throw error;
+            if (isApiConfigured()) {
+                await adminApi.deleteExperience(id);
+            } else if (isSupabaseConfigured()) {
+                const { error } = await supabase.from('experience').delete().eq('id', id);
+                if (error) throw error;
+            }
             setExperience(prev => prev.filter(item => item.id !== id));
             setFeedback('Experience deleted successfully!', 'success');
         } catch (err) {
@@ -306,27 +370,63 @@ export default function AdminDashboardPage() {
                 img: projForm.img
             };
 
-            let err;
-            if (projForm.id) {
-                const { error } = await supabase.from('projects').update(payload).eq('id', projForm.id);
-                err = error;
-                if (!err) {
-                    setProjects(prev => prev.map(item => item.id === projForm.id ? { ...item, ...payload, desc: projForm.desc } : item));
+            if (isApiConfigured()) {
+                const apiPayload = {
+                    title: projForm.title,
+                    overview: projForm.desc,
+                    tech_list: techList,
+                    repository_url: projForm.github,
+                    live_url: projForm.demo,
+                    cover_image: projForm.img
+                };
+                if (projForm.id) {
+                    await adminApi.updateProject(projForm.id, apiPayload);
+                } else {
+                    const res = await adminApi.createProject({ ...apiPayload, sort_order: projects.length });
+                    if (res?.data?.id) payload.id = res.data.id;
                 }
+                setProjects(prev => projForm.id
+                    ? prev.map(item => item.id === projForm.id ? { ...item, ...payload, desc: projForm.desc } : item)
+                    : [...prev, {
+                        ...payload,
+                        id: payload.id || Date.now(),
+                        desc: projForm.desc,
+                        slug: projForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                    }]
+                );
+            } else if (isSupabaseConfigured()) {
+                let err;
+                if (projForm.id) {
+                    const { error } = await supabase.from('projects').update(payload).eq('id', projForm.id);
+                    err = error;
+                    if (!err) {
+                        setProjects(prev => prev.map(item => item.id === projForm.id ? { ...item, ...payload, desc: projForm.desc } : item));
+                    }
+                } else {
+                    const sort_order = projects.length;
+                    const { data, error } = await supabase.from('projects').insert({ ...payload, sort_order }).select().single();
+                    err = error;
+                    if (!err && data) {
+                        setProjects(prev => [...prev, {
+                            ...data,
+                            desc: data.desc_text,
+                            slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                        }]);
+                    }
+                }
+                if (err) throw err;
             } else {
-                const sort_order = projects.length;
-                const { data, error } = await supabase.from('projects').insert({ ...payload, sort_order }).select().single();
-                err = error;
-                if (!err && data) {
-                    setProjects(prev => [...prev, {
-                        ...data,
-                        desc: data.desc_text,
-                        slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-                    }]);
-                }
+                setProjects(prev => projForm.id
+                    ? prev.map(item => item.id === projForm.id ? { ...item, ...payload, desc: projForm.desc } : item)
+                    : [...prev, {
+                        ...payload,
+                        id: 'preview-' + Date.now(),
+                        desc: projForm.desc,
+                        slug: projForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                    }]
+                );
             }
 
-            if (err) throw err;
             setProjForm(null);
             setFeedback('Project saved successfully!', 'success');
         } catch (err) {
@@ -341,21 +441,30 @@ export default function AdminDashboardPage() {
         setProjForm(prev => ({ ...prev, isUploading: true }));
 
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-            const filePath = `project-images/${fileName}`;
+            if (isApiConfigured()) {
+                const uploadRes = await adminApi.uploadMedia(file, 'projects');
+                const publicUrl = uploadRes.data?.url || uploadRes.url || '';
+                setProjForm(prev => ({ ...prev, img: publicUrl, isUploading: false }));
+            } else if (isSupabaseConfigured()) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+                const filePath = `project-images/${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-                .from('portfolio-uploads')
-                .upload(filePath, file);
+                const { error: uploadError } = await supabase.storage
+                    .from('portfolio-uploads')
+                    .upload(filePath, file);
 
-            if (uploadError) throw uploadError;
+                if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('portfolio-uploads')
-                .getPublicUrl(filePath);
+                const { data: { publicUrl } } = supabase.storage
+                    .from('portfolio-uploads')
+                    .getPublicUrl(filePath);
 
-            setProjForm(prev => ({ ...prev, img: publicUrl, isUploading: false }));
+                setProjForm(prev => ({ ...prev, img: publicUrl, isUploading: false }));
+            } else {
+                const previewUrl = URL.createObjectURL(file);
+                setProjForm(prev => ({ ...prev, img: previewUrl, isUploading: false }));
+            }
         } catch (err) {
             console.error(err);
             alert('Image upload failed: ' + err.message);
@@ -372,8 +481,12 @@ export default function AdminDashboardPage() {
 
         setFeedback('Deleting project...', 'info');
         try {
-            const { error } = await supabase.from('projects').delete().eq('id', id);
-            if (error) throw error;
+            if (isApiConfigured()) {
+                await adminApi.deleteProject(id);
+            } else if (isSupabaseConfigured()) {
+                const { error } = await supabase.from('projects').delete().eq('id', id);
+                if (error) throw error;
+            }
             setProjects(prev => prev.filter(item => item.id !== id));
             setFeedback('Project deleted successfully!', 'success');
         } catch (err) {
@@ -389,9 +502,13 @@ export default function AdminDashboardPage() {
 
         setFeedback('Adding skill...', 'info');
         try {
-            const sort_order = skills.length;
-            const { error } = await supabase.from('skills').insert({ name: newSkill.trim(), sort_order });
-            if (error) throw error;
+            if (isApiConfigured()) {
+                await adminApi.createSkill({ name: newSkill.trim(), sort_order: skills.length });
+            } else if (isSupabaseConfigured()) {
+                const sort_order = skills.length;
+                const { error } = await supabase.from('skills').insert({ name: newSkill.trim(), sort_order });
+                if (error) throw error;
+            }
 
             setSkills(prev => [...prev, newSkill.trim()]);
             setNewSkill('');
@@ -407,8 +524,12 @@ export default function AdminDashboardPage() {
 
         setFeedback('Deleting skill...', 'info');
         try {
-            const { error } = await supabase.from('skills').delete().eq('name', skillName);
-            if (error) throw error;
+            if (isApiConfigured()) {
+                await adminApi.deleteSkill(skillName);
+            } else if (isSupabaseConfigured()) {
+                const { error } = await supabase.from('skills').delete().eq('name', skillName);
+                if (error) throw error;
+            }
 
             setSkills(prev => prev.filter(s => s !== skillName));
             setFeedback('Skill removed successfully!', 'success');
@@ -430,23 +551,46 @@ export default function AdminDashboardPage() {
                 date: certForm.date
             };
 
-            let err;
-            if (certForm.id) {
-                const { error } = await supabase.from('certifications').update(payload).eq('id', certForm.id);
-                err = error;
-                if (!err) {
-                    setCertifications(prev => prev.map(item => item.id === certForm.id ? { ...item, ...payload } : item));
+            if (isApiConfigured()) {
+                const apiPayload = {
+                    name: certForm.title,
+                    issuer: certForm.issuer,
+                    issued_at: certForm.date
+                };
+                if (certForm.id) {
+                    await adminApi.updateCertification(certForm.id, apiPayload);
+                } else {
+                    const res = await adminApi.createCertification({ ...apiPayload, sort_order: certifications.length });
+                    if (res?.data?.id) payload.id = res.data.id;
                 }
+                setCertifications(prev => certForm.id
+                    ? prev.map(item => item.id === certForm.id ? { ...item, ...payload } : item)
+                    : [...prev, { id: payload.id || Date.now(), ...payload }]
+                );
+            } else if (isSupabaseConfigured()) {
+                let err;
+                if (certForm.id) {
+                    const { error } = await supabase.from('certifications').update(payload).eq('id', certForm.id);
+                    err = error;
+                    if (!err) {
+                        setCertifications(prev => prev.map(item => item.id === certForm.id ? { ...item, ...payload } : item));
+                    }
+                } else {
+                    const sort_order = certifications.length;
+                    const { data, error } = await supabase.from('certifications').insert({ ...payload, sort_order }).select().single();
+                    err = error;
+                    if (!err && data) {
+                        setCertifications(prev => [...prev, data]);
+                    }
+                }
+                if (err) throw err;
             } else {
-                const sort_order = certifications.length;
-                const { data, error } = await supabase.from('certifications').insert({ ...payload, sort_order }).select().single();
-                err = error;
-                if (!err && data) {
-                    setCertifications(prev => [...prev, data]);
-                }
+                setCertifications(prev => certForm.id
+                    ? prev.map(item => item.id === certForm.id ? { ...item, ...payload } : item)
+                    : [...prev, { id: 'preview-' + Date.now(), ...payload }]
+                );
             }
 
-            if (err) throw err;
             setCertForm(null);
             setFeedback('Certification saved successfully!', 'success');
         } catch (err) {
@@ -464,8 +608,12 @@ export default function AdminDashboardPage() {
 
         setFeedback('Deleting certification...', 'info');
         try {
-            const { error } = await supabase.from('certifications').delete().eq('id', id);
-            if (error) throw error;
+            if (isApiConfigured()) {
+                await adminApi.deleteCertification(id);
+            } else if (isSupabaseConfigured()) {
+                const { error } = await supabase.from('certifications').delete().eq('id', id);
+                if (error) throw error;
+            }
             setCertifications(prev => prev.filter(item => item.id !== id));
             setFeedback('Certification deleted successfully!', 'success');
         } catch (err) {
@@ -486,6 +634,11 @@ export default function AdminDashboardPage() {
                             </h1>
                             <p className="caption text-secondary">
                                 Logged in as: <strong>{user?.email || 'Administrator'}</strong>
+                                {user?.is_preview && (
+                                    <Badge variant="secondary" style={{ marginLeft: 'var(--space-2)' }}>
+                                        Offline Preview Mode
+                                    </Badge>
+                                )}
                             </p>
                         </div>
 

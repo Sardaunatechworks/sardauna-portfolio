@@ -4,7 +4,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { authApi, isApiConfigured } from '../../lib/api';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
-import { Lock, Mail, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, Mail, ArrowLeft, AlertCircle, Loader2, Info, CheckCircle } from 'lucide-react';
 
 export default function AdminLoginPage({ onLoginSuccess }) {
     const [email, setEmail] = useState('');
@@ -53,7 +53,26 @@ export default function AdminLoginPage({ onLoginSuccess }) {
                     onLoginSuccess(data.user);
                 }
                 navigate('/admin');
+                return;
             }
+
+            // 3. Offline Preview Mode (when neither live backend is configured in .env)
+            if (!isApiConfigured() && !isSupabaseConfigured()) {
+                const previewUser = {
+                    id: 'offline-preview-admin',
+                    email: email.trim() || 'admin@sardaunatech.com',
+                    name: 'Muhammad Auwal Abubakar',
+                    role: 'Administrator (Offline Preview)',
+                    is_preview: true
+                };
+                if (onLoginSuccess) {
+                    onLoginSuccess(previewUser);
+                }
+                navigate('/admin');
+                return;
+            }
+
+            throw new Error('Authentication failed. Please verify your credentials.');
         } catch (err) {
             console.error('Login error:', err);
             setError(err.message || 'Authentication failed. Please verify your credentials.');
@@ -85,11 +104,21 @@ export default function AdminLoginPage({ onLoginSuccess }) {
                         </p>
                     </div>
 
-                    {!isSupabaseConfigured() && (
-                        <div className="admin-alert admin-alert--warning" role="alert" style={{ margin: 'var(--space-4) 0' }}>
-                            <AlertCircle size={18} aria-hidden="true" />
+                    {isApiConfigured() ? (
+                        <div className="admin-alert admin-alert--info" role="status" style={{ margin: 'var(--space-4) 0' }}>
+                            <CheckCircle size={18} className="text-success flex-shrink-0" aria-hidden="true" />
+                            <span>Connected to Laravel 13 REST API backend.</span>
+                        </div>
+                    ) : isSupabaseConfigured() ? (
+                        <div className="admin-alert admin-alert--info" role="status" style={{ margin: 'var(--space-4) 0' }}>
+                            <CheckCircle size={18} className="text-success flex-shrink-0" aria-hidden="true" />
+                            <span>Connected to Supabase authentication.</span>
+                        </div>
+                    ) : (
+                        <div className="admin-alert admin-alert--warning" role="status" style={{ margin: 'var(--space-4) 0' }}>
+                            <Info size={18} className="flex-shrink-0" aria-hidden="true" />
                             <span>
-                                Supabase environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) are not set. Offline defaults are currently in use.
+                                <strong>Offline Preview Mode:</strong> Backend credentials are not set in <code>.env</code>. You can sign in with any email &amp; password to explore and test the dashboard. To connect to production, configure <code>VITE_API_BASE_URL</code>.
                             </span>
                         </div>
                     )}
@@ -178,6 +207,10 @@ export default function AdminLoginPage({ onLoginSuccess }) {
                     padding: var(--space-3) var(--space-4);
                     border-radius: var(--radius-sm);
                     font-size: var(--text-sm);
+                .admin-alert--info {
+                    background-color: rgba(41, 128, 185, 0.08);
+                    color: #2980b9;
+                    border: 1px solid rgba(41, 128, 185, 0.25);
                 }
                 .admin-alert--warning {
                     background-color: rgba(230, 126, 34, 0.1);
