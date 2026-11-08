@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { portfolioApi, authApi } from '../lib/api';
+import { portfolioApi, authApi, isApiConfigured } from '../lib/api';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import {
     DEFAULT_PERSONAL_INFO,
@@ -41,8 +41,8 @@ export function PortfolioProvider({ children }) {
         let isMounted = true;
 
         const checkAuth = async () => {
-            // 1. Try Laravel Sanctum session if token exists
-            if (authApi.hasStoredToken()) {
+            // 1. Try Laravel Sanctum session if token exists and API is configured
+            if (isApiConfigured() && authApi.hasStoredToken()) {
                 try {
                     const meData = await authApi.getMe();
                     if (isMounted && meData) {
@@ -101,73 +101,75 @@ export function PortfolioProvider({ children }) {
         const loadData = async () => {
             setLoading(true);
 
-            // Strategy 1: Attempt to load from Laravel 13 REST API
-            try {
-                const landing = await portfolioApi.fetchLandingData();
-                const hasLaravelData = Boolean(
-                    landing.profile ||
-                    (landing.experiences && landing.experiences.length > 0) ||
-                    (landing.projects && landing.projects.length > 0)
-                );
+            // Strategy 1: Attempt to load from Laravel 13 REST API if configured
+            if (isApiConfigured()) {
+                try {
+                    const landing = await portfolioApi.fetchLandingData();
+                    const hasLaravelData = Boolean(
+                        landing.profile ||
+                        (landing.experiences && landing.experiences.length > 0) ||
+                        (landing.projects && landing.projects.length > 0)
+                    );
 
-                if (hasLaravelData && isMounted) {
-                    setBackendType('laravel');
-                    setSupabaseConnected(false);
-                    setDbIsEmpty(false);
+                    if (hasLaravelData && isMounted) {
+                        setBackendType('laravel');
+                        setSupabaseConnected(false);
+                        setDbIsEmpty(false);
 
-                    if (landing.profile) {
-                        setPersonalInfo(prev => ({ ...prev, ...landing.profile }));
+                        if (landing.profile) {
+                            setPersonalInfo(prev => ({ ...prev, ...landing.profile }));
+                        }
+
+                        if (landing.experiences && landing.experiences.length > 0) {
+                            setExperience(landing.experiences.map(e => ({
+                                id: e.id,
+                                role: e.role,
+                                company: e.company,
+                                date: e.date,
+                                desc: Array.isArray(e.desc) ? e.desc : [e.desc].filter(Boolean)
+                            })));
+                        }
+
+                        if (landing.projects && landing.projects.length > 0) {
+                            setProjects(landing.projects.map(p => ({
+                                id: p.id,
+                                title: p.title,
+                                slug: p.slug || p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+                                desc: p.desc || p.overview || '',
+                                tech: Array.isArray(p.tech) ? p.tech : [],
+                                github: p.github || '',
+                                demo: p.demo || '',
+                                img: p.img || '',
+                                status: p.status || 'Live',
+                                role: p.role || 'Software Engineer',
+                                category: p.category || 'Technology'
+                            })));
+                        }
+
+                        if (landing.skills && landing.skills.length > 0) {
+                            setSkills(landing.skills.map(s => (typeof s === 'string' ? s : s.name)));
+                        }
+
+                        if (landing.certifications && landing.certifications.length > 0) {
+                            setCertifications(landing.certifications.map(c => ({
+                                id: c.id,
+                                title: c.title || c.name,
+                                issuer: c.issuer,
+                                date: c.date
+                            })));
+                        }
+
+                        if (landing.community) {
+                            setCommunity(landing.community);
+                        }
+
+                        setLoading(false);
+                        return;
                     }
-
-                    if (landing.experiences && landing.experiences.length > 0) {
-                        setExperience(landing.experiences.map(e => ({
-                            id: e.id,
-                            role: e.role,
-                            company: e.company,
-                            date: e.date,
-                            desc: Array.isArray(e.desc) ? e.desc : [e.desc].filter(Boolean)
-                        })));
-                    }
-
-                    if (landing.projects && landing.projects.length > 0) {
-                        setProjects(landing.projects.map(p => ({
-                            id: p.id,
-                            title: p.title,
-                            slug: p.slug || p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-                            desc: p.desc || p.overview || '',
-                            tech: Array.isArray(p.tech) ? p.tech : [],
-                            github: p.github || '',
-                            demo: p.demo || '',
-                            img: p.img || '',
-                            status: p.status || 'Live',
-                            role: p.role || 'Software Engineer',
-                            category: p.category || 'Technology'
-                        })));
-                    }
-
-                    if (landing.skills && landing.skills.length > 0) {
-                        setSkills(landing.skills.map(s => (typeof s === 'string' ? s : s.name)));
-                    }
-
-                    if (landing.certifications && landing.certifications.length > 0) {
-                        setCertifications(landing.certifications.map(c => ({
-                            id: c.id,
-                            title: c.title || c.name,
-                            issuer: c.issuer,
-                            date: c.date
-                        })));
-                    }
-
-                    if (landing.community) {
-                        setCommunity(landing.community);
-                    }
-
-                    setLoading(false);
-                    return;
+                } catch (laravelErr) {
+                    // Laravel backend is currently unreachable (e.g. offline dev or network latency)
+                    console.info('Laravel API not reachable, falling back to secondary provider...', laravelErr?.message);
                 }
-            } catch (laravelErr) {
-                // Laravel backend is currently unreachable (e.g. offline dev or unmounted route)
-                console.info('Laravel API not reachable, attempting secondary provider...', laravelErr?.message);
             }
 
             // Strategy 2: Attempt Supabase if configured

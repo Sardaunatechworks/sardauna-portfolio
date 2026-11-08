@@ -3,12 +3,23 @@
  * Handles Sanctum cookies & Bearer tokens, unified response parsing, and error normalization.
  */
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
+const rawApiUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+const API_BASE_URL = rawApiUrl.replace(/\/+$/, '');
+
+export const isApiConfigured = () => {
+    return Boolean(
+        API_BASE_URL &&
+        API_BASE_URL !== '' &&
+        !API_BASE_URL.includes('your-api-domain.com') &&
+        !API_BASE_URL.includes('placeholder')
+    );
+};
+
 const TOKEN_STORAGE_KEY = 'portfolio_auth_token';
 
 class ApiClient {
     constructor() {
-        this.baseUrl = API_BASE_URL;
+        this.baseUrl = API_BASE_URL || '/api/v1';
     }
 
     getToken() {

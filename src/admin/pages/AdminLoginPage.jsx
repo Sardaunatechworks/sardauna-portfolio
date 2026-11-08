@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { authApi } from '../../lib/api';
+import { authApi, isApiConfigured } from '../../lib/api';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import { Lock, Mail, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
@@ -19,22 +19,24 @@ export default function AdminLoginPage({ onLoginSuccess }) {
         setError('');
 
         try {
-            // 1. Attempt Laravel Sanctum login
+            // 1. Attempt Laravel Sanctum login if API is configured
             let laravelSucceeded = false;
-            try {
-                const res = await authApi.login(email, password);
-                if (res?.user || res?.token) {
-                    laravelSucceeded = true;
-                    if (onLoginSuccess) {
-                        onLoginSuccess(res.user);
+            if (isApiConfigured()) {
+                try {
+                    const res = await authApi.login(email, password);
+                    if (res?.user || res?.token) {
+                        laravelSucceeded = true;
+                        if (onLoginSuccess) {
+                            onLoginSuccess(res.user);
+                        }
+                        navigate('/admin');
+                        return;
                     }
-                    navigate('/admin');
-                    return;
-                }
-            } catch (laravelErr) {
-                // If Supabase is not configured, rethrow the Laravel error
-                if (!isSupabaseConfigured()) {
-                    throw laravelErr;
+                } catch (laravelErr) {
+                    // If Supabase is not configured, rethrow the Laravel error
+                    if (!isSupabaseConfigured()) {
+                        throw laravelErr;
+                    }
                 }
             }
 
