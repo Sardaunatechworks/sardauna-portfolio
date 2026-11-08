@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { authApi, adminApi } from '../../lib/api';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -66,10 +67,19 @@ export default function AdminDashboardPage() {
     };
 
     const handleLogout = async () => {
-        if (isSupabaseConfigured()) {
-            await supabase.auth.signOut();
-            setUser(null);
+        try {
+            await authApi.logout();
+        } catch {
+            // ignore
         }
+        if (isSupabaseConfigured()) {
+            try {
+                await supabase.auth.signOut();
+            } catch {
+                // ignore
+            }
+        }
+        setUser(null);
     };
 
     // ── 0. Initialize Database ──────────────────────────────────────

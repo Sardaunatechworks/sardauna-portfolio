@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { authApi } from '../../lib/api';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import { Lock, Mail, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
@@ -14,26 +15,43 @@ export default function AdminLoginPage({ onLoginSuccess }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!isSupabaseConfigured()) {
-            setError('Supabase connection credentials are not configured in environment variables.');
-            return;
-        }
-
         setLoading(true);
         setError('');
 
         try {
-            const { data, error: signInError } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            });
-
-            if (signInError) throw signInError;
-
-            if (onLoginSuccess) {
-                onLoginSuccess(data.user);
+            // 1. Attempt Laravel Sanctum login
+            let laravelSucceeded = false;
+            try {
+                const res = await authApi.login(email, password);
+                if (res?.user || res?.token) {
+                    laravelSucceeded = true;
+                    if (onLoginSuccess) {
+                        onLoginSuccess(res.user);
+                    }
+                    navigate('/admin');
+                    return;
+                }
+            } catch (laravelErr) {
+                // If Supabase is not configured, rethrow the Laravel error
+                if (!isSupabaseConfigured()) {
+                    throw laravelErr;
+                }
             }
-            navigate('/admin');
+
+            // 2. Fallback to Supabase if configured
+            if (!laravelSucceeded && isSupabaseConfigured()) {
+                const { data, error: signInError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (signInError) throw signInError;
+
+                if (onLoginSuccess) {
+                    onLoginSuccess(data.user);
+                }
+                navigate('/admin');
+            }
         } catch (err) {
             console.error('Login error:', err);
             setError(err.message || 'Authentication failed. Please verify your credentials.');
@@ -61,7 +79,7 @@ export default function AdminLoginPage({ onLoginSuccess }) {
                             Content Management System
                         </h1>
                         <p className="caption text-secondary">
-                            Authorized personnel only · Supabase Authentication
+                            Authorized personnel only · Secure Authentication
                         </p>
                     </div>
 

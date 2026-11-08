@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Button from '../ui/Button';
 import { Send, CheckCircle, AlertCircle, Loader2, Mail, ShieldCheck } from 'lucide-react';
 import { usePortfolio } from '../../hooks/usePortfolio';
+import { contactApi } from '../../lib/api';
 
 export default function ContactForm() {
     const { personalInfo } = usePortfolio();
@@ -9,7 +10,8 @@ export default function ContactForm() {
         name: '',
         email: '',
         subject: '',
-        message: ''
+        message: '',
+        honeypot: ''
     });
     const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
     const [statusMessage, setStatusMessage] = useState('');
@@ -40,26 +42,26 @@ export default function ContactForm() {
         setStatusMessage('');
 
         try {
-            const response = await fetch('/api/contact', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
+            const result = await contactApi.sendMessage(formData);
 
-            const result = await response.json();
-
-            if (response.ok && result.success) {
+            if (result && (result.success || result.data)) {
                 setStatus('success');
-                setStatusMessage('Thank you. Your message has been dispatched successfully. I will review and reply within 24–48 hours.');
-                setFormData({ name: '', email: '', subject: '', message: '' });
+                setStatusMessage(
+                    result.message ||
+                    'Thank you. Your message has been dispatched successfully. I will review and reply within 24–48 hours.'
+                );
+                setFormData({ name: '', email: '', subject: '', message: '', honeypot: '' });
             } else {
-                throw new Error(result.error || 'Failed to dispatch message.');
+                throw new Error(result?.message || result?.error || 'Failed to dispatch message.');
             }
         } catch (err) {
             console.error('Contact form submission error:', err);
             setStatus('error');
+            const msg = err.errors?.email?.[0] || err.message;
             setStatusMessage(
-                `Direct server dispatch unavailable right now. Please write directly to ${personalInfo.email || 'contact.sardaunatech@gmail.com'}.`
+                msg && !msg.includes('HTTP error')
+                    ? msg
+                    : `Direct server dispatch unavailable right now. Please write directly to ${personalInfo.email || 'contact.sardaunatech@gmail.com'}.`
             );
         }
     };
@@ -96,6 +98,18 @@ export default function ContactForm() {
                 </div>
             ) : (
                 <form className="contact-form-element" onSubmit={handleSubmit} noValidate>
+                    {/* Bot honeypot - invisible to humans, caught by bots */}
+                    <div style={{ display: 'none', position: 'absolute', left: '-9999px' }} aria-hidden="true">
+                        <input
+                            type="text"
+                            name="honeypot"
+                            tabIndex={-1}
+                            autoComplete="off"
+                            value={formData.honeypot}
+                            onChange={handleChange}
+                        />
+                    </div>
+
                     {status === 'error' && (
                         <div className="contact-form__alert-banner" role="alert">
                             <AlertCircle size={20} className="text-error flex-shrink-0" aria-hidden="true" />
