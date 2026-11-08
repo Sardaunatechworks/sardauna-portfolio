@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 import HeroSection from '../components/sections/HeroSection';
+import SkillsMarquee from '../components/sections/SkillsMarquee';
 import SelectedWork from '../components/sections/SelectedWork';
 import ExperienceTimeline from '../components/sections/ExperienceTimeline';
+import ContactForm from '../components/sections/ContactForm';
 import SectionHeading from '../components/ui/SectionHeading';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { useSEO } from '../hooks/useSEO';
-import { ArrowRight, Users, Award, BookOpen } from 'lucide-react';
+import { ArrowRight, Users, Award, BookOpen, Mail, Phone, MapPin, Clock } from 'lucide-react';
 
 export default function HomePage() {
     useSEO({
@@ -15,12 +17,15 @@ export default function HomePage() {
         description: 'Founder & CEO of Sardauna Tech Lab Ltd and Project Manager at Startup Jigawa. Building practical digital solutions and empowering communities through technology.'
     });
 
-    const { experience, community, certifications } = usePortfolio();
+    const { personalInfo, experience } = usePortfolio();
     const recentExperience = experience.slice(0, 3);
 
     return (
         <div className="home-page">
             <HeroSection />
+
+            {/* Continuous Animated Scrolling Skills & Tech Marquee */}
+            <SkillsMarquee />
 
             {/* Editorial Statement */}
             <section className="section bg-surface-alt" aria-label="Editorial Statement">
@@ -119,23 +124,83 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* Bottom Invitation */}
-            <section className="section bg-ivory" aria-label="Collaboration Inquiry">
-                <div className="container container--sm text-center">
-                    <SectionHeading
-                        align="center"
-                        kicker="COLLABORATION"
-                        title="Have a Project or Initiative in Mind?"
-                        subtitle="Available for consulting, technical leadership, keynote speaking, and strategic partnership discussions."
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
-                        <Button to="/contact" variant="primary" size="lg">
-                            Get in Touch
-                            <ArrowRight size={16} aria-hidden="true" />
-                        </Button>
-                        <Button to="/about" variant="secondary" size="lg">
-                            More About Muhammad
-                        </Button>
+            {/* Direct Contact & Inquiry Section */}
+            <section id="contact" className="section bg-ivory" aria-label="Direct Contact Section" style={{ scrollMarginTop: '80px' }}>
+                <div className="container">
+                    <div className="home-contact-grid">
+                        <div className="home-contact-form-pane">
+                            <SectionHeading
+                                kicker="GET IN TOUCH"
+                                title="Send a Direct Message"
+                                subtitle="Whether discussing a venture opportunity, requesting architectural consulting, or speaking at a conference, your note goes directly to my private inbox."
+                            />
+                            <ContactForm />
+                        </div>
+
+                        <aside className="home-contact-info-pane">
+                            <Card padded className="home-contact-card">
+                                <span className="eyebrow text-gold" style={{ display: 'block', marginBottom: 'var(--space-2)' }}>
+                                    COMMUNICATION CHANNELS
+                                </span>
+                                <h3 className="h3 font-serif" style={{ marginBottom: 'var(--space-4)' }}>
+                                    Direct Touchpoints
+                                </h3>
+
+                                <div className="contact-points-list">
+                                    <div className="contact-point">
+                                        <div className="contact-point-icon text-gold">
+                                            <Mail size={16} aria-hidden="true" />
+                                        </div>
+                                        <div>
+                                            <span className="caption text-tertiary">Direct Email</span>
+                                            <p className="body-sm font-medium">
+                                                <a href={`mailto:${personalInfo.email || 'contact.sardaunatech@gmail.com'}`} className="inline-link">
+                                                    {personalInfo.email || 'contact.sardaunatech@gmail.com'}
+                                                </a>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {personalInfo.phone1 && (
+                                        <div className="contact-point">
+                                            <div className="contact-point-icon text-gold">
+                                                <Phone size={16} aria-hidden="true" />
+                                            </div>
+                                            <div>
+                                                <span className="caption text-tertiary">Direct Phone (Nigeria)</span>
+                                                <p className="body-sm font-medium">
+                                                    <a href={`tel:${personalInfo.phone1.replace(/\s+/g, '')}`} className="inline-link">
+                                                        {personalInfo.phone1}
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="contact-point">
+                                        <div className="contact-point-icon text-gold">
+                                            <MapPin size={16} aria-hidden="true" />
+                                        </div>
+                                        <div>
+                                            <span className="caption text-tertiary">Primary Base</span>
+                                            <p className="body-sm font-medium text-ink">
+                                                {personalInfo.location || 'Dutse, Jigawa State, Nigeria'}
+                                            </p>
+                                            <span className="caption text-tertiary">WAT / UTC+1</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr className="divider" style={{ margin: 'var(--space-5) 0' }} />
+
+                                <div className="sla-banner">
+                                    <Clock size={16} className="text-gold flex-shrink-0" aria-hidden="true" />
+                                    <p className="caption text-secondary" style={{ margin: 0, lineHeight: 1.5 }}>
+                                        Verified professional inquiries typically receive a direct response within 24–48 business hours.
+                                    </p>
+                                </div>
+                            </Card>
+                        </aside>
                     </div>
                 </div>
             </section>
@@ -177,6 +242,48 @@ export default function HomePage() {
                 }
                 .community-mini-card__icon {
                     margin-bottom: var(--space-4);
+                }
+                .home-contact-grid {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: var(--space-12);
+                }
+                @media (min-width: 992px) {
+                    .home-contact-grid {
+                        grid-template-columns: 1.15fr 0.85fr;
+                        gap: var(--space-16);
+                        align-items: start;
+                    }
+                }
+                .contact-points-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: var(--space-4);
+                }
+                .contact-point {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: var(--space-3);
+                }
+                .contact-point-icon {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: var(--radius-sm);
+                    background-color: var(--color-surface-alt);
+                    border: 1px solid var(--color-border-light);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+                .sla-banner {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-3);
+                    padding: var(--space-3);
+                    background-color: var(--color-surface-alt);
+                    border-radius: var(--radius-sm);
+                    border: 1px solid var(--color-border-light);
                 }
             `}</style>
         </div>
