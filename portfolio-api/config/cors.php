@@ -12,10 +12,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,https://sardauna-portfolio.vercel.app'))),
+    'allowed_origins' => array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,https://muhammad.sardaunatechlabs.com.ng,https://sardauna-portfolio.vercel.app'))),
 
     'allowed_origins_patterns' => [
         '/^https:\/\/.*\.vercel\.app$/',
+        '/^https:\/\/.*\.sardaunatechlabs\.com\.ng$/',
     ],
 
     'allowed_headers' => ['*'],
