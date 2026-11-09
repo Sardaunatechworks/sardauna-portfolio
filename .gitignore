@@ -3,3 +3,11 @@ node_modules/
 dist/
 build/
 .DS_Store
+
+# Backend / Composer
+composer.phar
+portfolio-api/vendor/
+portfolio-api/.env
+portfolio-api/storage/logs/*.log
+portfolio-api/bootstrap/cache/*.php
+!portfolio-api/bootstrap/cache/.gitkeep
